@@ -1,0 +1,94 @@
+Chess Module – Features and Notes for the Team
+
+This is a quick rundown of what the chess game logic actually supports, what it does not support, and what the UI Team needs to know when connecting it to the GUI.
+
+1. What the code can do
+
+The chess engine supports all the normal movements for every piece. Pawns move and capture properly, including their double step from the starting row. Knights, bishops, rooks, queens, and the king all move as expected. Captures work. The turn switches cleanly between white and black.
+
+The engine handles checks, checkmates, and stalemates. If the side to move has no legal move and their king is in check, it becomes checkmate. If they have no legal move but the king is not in check, it becomes stalemate.
+
+Castling is supported on both sides, king side and queen side, as long as the king and rook have not moved, the path is clear, and none of the squares the king passes through are attacked. Promotion also works, but it always promotes to a queen. That keeps things simple and stable.
+
+The engine also filters legal moves correctly. It generates all pseudo legal moves and then removes the ones that would leave your own king in check. So the game cannot enter an illegal state.
+
+The turn logic works and illegal moves simply get rejected without breaking the game.
+
+Board snapshots can be pulled safely by the GUI so it can draw the pieces. The GUI never modifies the board directly.
+
+The JUnit tests all passed. They cover basic board setup, pawn movement, illegal move rejection, promotion, castling, check detection, and a real checkmate (Fool's Mate). So the core engine is solid.
+
+2. What is not included
+
+Some special rules are deliberately not implemented. There is no en passant. Promotions only turn into a queen, no choice of piece. The engine does not track threefold repetition, fifty move rule, draw by insufficient material, or anything advanced like that. No clocks, timers, or move notation. No undo system. Basically, it is realistic chess without the deep tournament rules.
+
+3. API the UI Team needs to use
+
+Here are the only methods the UI needs.
+
+To create a game:
+ChessGame game = new ChessGame();
+
+To get the board so you can draw pieces:
+Piece[][] board = game.getBoardSnapshot();
+
+To highlight possible moves when the user clicks a piece:
+List<ChessMove> moves = game.getLegalMovesFrom(file, rank);
+
+To actually make a move after the user picks a destination square:
+boolean ok = game.makeMove(fromFile, fromRank, toFile, toRank);
+
+To check what the game state is after a move:
+GameStatus s = game.getStatus();
+
+GameStatus will be RUNNING, CHECKMATE, or STALEMATE.
+
+4. Notes for the UI
+
+The UI should take mouse clicks, convert them into (file, rank), ask the engine for legal moves, highlight them, and then call makeMove when the user picks the target square. After each move, refresh the panel. For game over states, just check getStatus and show whatever screen you want.
+
+The board snapshot returned by getBoardSnapshot should only be used to draw pieces. Do not change the array.
+
+Everything is single threaded, so just call everything from the Swing thread normally.
+
+5. Summary
+
+The chess logic is fully playable, clean, and stable. It handles all standard rules that matter for regular gameplay, without the heavy special tournament rules. It is ready for GUI integration, and the engine already has all the hooks needed: board snapshots, legal move queries, and move execution. Nothing weird or complicated is required for the UI side.
+
+also find below the rough structure of where the chess folder will go including everything else, changes will need to be made to all files at the time of structure to make sure they are calling the right paths but this is roughly how it will go:
+
+omg-platform/
+│
+├─ src/
+│  │
+│  └─ omg/
+│     │
+│     ├─ ui/
+│     │  ├─ panels/
+│     │  ├─ components/
+│     │  └─ icons/
+│     │
+│     ├─ domain/
+│     │  ├─ user/
+│     │  ├─ profile/
+│     │  ├─ stats/
+│     │  ├─ auth/
+│     │  ├─ match/
+│     │  ├─ lobby/
+│     │  ├─ leaderboard/
+│     │  ├─ chat/
+│     │  └─ game/
+│     │
+│     ├─ chess/
+│     │
+│     ├─ tictactoe/
+│     │
+│     ├─ go/
+│     │
+│     └─ integration/
+│        ├─ persistence/
+│        ├─ networking/
+│        └─ stubs/
+│
+└─ resources/
+FOR UI TEAM: MAKE SURE ALL RESOURCES NEEDED FOR UI INCLUDING PICTURES AUDIO CUES OR ANYTHING ELSE NOT CODE GOES NEATLY IN THE RESOURCES PANEL
